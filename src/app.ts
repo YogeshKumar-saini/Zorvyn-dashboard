@@ -101,8 +101,8 @@ const swaggerOptions: swaggerJsdoc.Options = {
       contact: { name: 'Zorvyn Team' },
     },
     servers: [
-      { url: `http://localhost:${env.PORT}`, description: 'Development' },
       { url: 'https://zorvyn-dashboard.onrender.com', description: 'Production' },
+      { url: `http://localhost:${env.PORT}`, description: 'Development' },
     ],
     components: {
       securitySchemes: {
