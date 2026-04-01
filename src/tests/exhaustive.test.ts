@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterEach } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import request from 'supertest';
 
 import app from '../app';
@@ -21,10 +21,6 @@ interface TestTrend {
 
 describe('🛡️ Zorvyn Finance Backend: Exhaustive Integration Suite', () => {
   beforeAll(async () => {
-    await clearDatabase();
-  });
-
-  afterEach(async () => {
     await clearDatabase();
   });
 
@@ -139,8 +135,8 @@ describe('🛡️ Zorvyn Finance Backend: Exhaustive Integration Suite', () => {
       it('should allow ADMIN to list users', async () => {
         const res = await request(app).get('/api/v1/users').set(adminAuth);
         expect(res.status).toBe(200);
-        const body = res.body as { data: { users: unknown[] } };
-        expect(body.data.users.length).toBeGreaterThanOrEqual(3);
+        const body = res.body as { data: unknown[] };
+        expect(body.data.length).toBeGreaterThanOrEqual(3);
       });
 
       it('should block ANALYST from listing users', async () => {
