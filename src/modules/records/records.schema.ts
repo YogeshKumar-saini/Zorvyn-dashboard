@@ -1,4 +1,5 @@
 import { z } from 'zod';
+
 import { RECORD_TYPE } from '../../constants';
 
 export const createRecordSchema = z.object({

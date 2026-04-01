@@ -1,6 +1,7 @@
+import path from 'path';
+
 import { z } from 'zod';
 import dotenv from 'dotenv';
-import path from 'path';
 
 // Load .env file
 dotenv.config({ path: path.join(__dirname, '../../.env') });

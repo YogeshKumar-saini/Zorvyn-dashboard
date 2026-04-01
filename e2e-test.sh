@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # Configuration
-API_URL="http://localhost:4000/api"
+API_URL="http://localhost:3000/api/v1"
 ADMIN_EMAIL="admin@zorvyn.com"
-ADMIN_PASS="admin123"
+ADMIN_PASS="Password@123!"
 ANALYST_EMAIL="analyst@zorvyn.com"
-ANALYST_PASS="analyst123"
+ANALYST_PASS="Password@123!"
 VIEWER_EMAIL="viewer@zorvyn.com"
-VIEWER_PASS="viewer123"
+VIEWER_PASS="Password@123!"
 
 # Colors for output
 GREEN='\033[0;32m'

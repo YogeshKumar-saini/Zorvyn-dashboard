@@ -1,7 +1,9 @@
+import type { Request } from 'express';
+
 import { prisma } from '../../lib/prisma';
 import { getPagination, buildPaginationMeta } from '../../utils/pagination';
 import { AUDIT_ACTION } from '../../constants';
-import type { Request } from 'express';
+
 import type { CreateRecordInput, UpdateRecordInput, RecordQueryInput } from './records.schema';
 
 /**

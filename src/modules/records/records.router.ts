@@ -1,10 +1,12 @@
 import { Router } from 'express';
-import { RecordsController } from './records.controller';
+
 import { authenticate } from '../../middleware/auth.middleware';
 import { analystOrAdmin, adminOnly } from '../../middleware/rbac.middleware';
 
+import { RecordsController } from './records.controller';
+
 const router = Router();
-router.use(authenticate);
+router.use((req, res, next) => { void authenticate(req, res, next); });
 
 /**
  * @swagger
@@ -51,7 +53,9 @@ router.use(authenticate);
  *       403:
  *         description: Insufficient permissions
  */
-router.get('/', analystOrAdmin, RecordsController.list);
+router.get('/', (req, res, next) => { void analystOrAdmin(req, res, next); }, (req, res, next) => {
+  void RecordsController.list(req, res, next);
+});
 
 /**
  * @swagger
@@ -73,7 +77,9 @@ router.get('/', analystOrAdmin, RecordsController.list);
  *       404:
  *         description: Record not found
  */
-router.get('/:id', analystOrAdmin, RecordsController.getById);
+router.get('/:id', (req, res, next) => { void analystOrAdmin(req, res, next); }, (req, res, next) => {
+  void RecordsController.getById(req, res, next);
+});
 
 /**
  * @swagger
@@ -109,7 +115,9 @@ router.get('/:id', analystOrAdmin, RecordsController.getById);
  *       403:
  *         description: Admin role required
  */
-router.post('/', adminOnly, RecordsController.create);
+router.post('/', (req, res, next) => { void adminOnly(req, res, next); }, (req, res, next) => {
+  void RecordsController.create(req, res, next);
+});
 
 /**
  * @swagger
@@ -131,7 +139,9 @@ router.post('/', adminOnly, RecordsController.create);
  *       404:
  *         description: Record not found
  */
-router.patch('/:id', adminOnly, RecordsController.update);
+router.patch('/:id', (req, res, next) => { void adminOnly(req, res, next); }, (req, res, next) => {
+  void RecordsController.update(req, res, next);
+});
 
 /**
  * @swagger
@@ -153,6 +163,8 @@ router.patch('/:id', adminOnly, RecordsController.update);
  *       404:
  *         description: Record not found
  */
-router.delete('/:id', adminOnly, RecordsController.delete);
+router.delete('/:id', (req, res, next) => { void adminOnly(req, res, next); }, (req, res, next) => {
+  void RecordsController.delete(req, res, next);
+});
 
 export default router;

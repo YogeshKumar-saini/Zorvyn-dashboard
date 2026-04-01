@@ -1,8 +1,9 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
-import { sendError } from '../utils/response';
+
 import { env } from '../config/env';
-import logger from '../lib/logger';
+import { logger } from '../lib/logger';
+import { sendError } from '../utils/response';
 
 /**
  * Global Error Handler Middleware

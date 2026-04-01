@@ -1,4 +1,4 @@
-import { Role, UserStatus } from '../constants';
+import type { Role, UserStatus } from '../constants';
 
 /**
  * Augment Express Request with our custom properties.

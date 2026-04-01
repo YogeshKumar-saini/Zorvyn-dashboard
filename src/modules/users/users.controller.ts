@@ -1,5 +1,7 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
+
 import { sendSuccess } from '../../utils/response';
+
 import { updateRoleSchema, updateStatusSchema, createUserSchema } from './users.schema';
 import { UsersService } from './users.service';
 

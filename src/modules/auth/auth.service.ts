@@ -1,11 +1,14 @@
+import { randomUUID } from 'crypto';
+
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+
 import { prisma } from '../../lib/prisma';
 import { env } from '../../config/env';
 import { ROLE, STATUS, AUDIT_ACTION } from '../../constants';
 import { blacklistToken } from '../../middleware/auth.middleware';
+
 import type { RegisterInput, LoginInput } from './auth.schema';
-import { randomUUID } from 'crypto';
 
 /**
  * Auth Service — all business logic for authentication.

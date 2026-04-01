@@ -1,10 +1,13 @@
 import { Router } from 'express';
-import { UsersController } from './users.controller';
+
 import { authenticate } from '../../middleware/auth.middleware';
 import { adminOnly } from '../../middleware/rbac.middleware';
 
+import { UsersController } from './users.controller';
+
 const router = Router();
-router.use(authenticate, adminOnly);
+router.use((req, res, next) => { void authenticate(req, res, next); });
+router.use((req, res, next) => { void adminOnly(req, res, next); });
 
 /**
  * @swagger
@@ -32,7 +35,9 @@ router.use(authenticate, adminOnly);
  *       403:
  *         description: Admin role required
  */
-router.get('/', UsersController.list);
+router.get('/', (req, res, next) => {
+  void UsersController.list(req, res, next);
+});
 
 /**
  * @swagger
@@ -54,7 +59,9 @@ router.get('/', UsersController.list);
  *       404:
  *         description: User not found
  */
-router.get('/:id', UsersController.getById);
+router.get('/:id', (req, res, next) => {
+  void UsersController.getById(req, res, next);
+});
 
 /**
  * @swagger
@@ -86,7 +93,9 @@ router.get('/:id', UsersController.getById);
  *       201:
  *         description: User created
  */
-router.post('/', UsersController.create);
+router.post('/', (req, res, next) => {
+  void UsersController.create(req, res, next);
+});
 
 /**
  * @swagger
@@ -117,7 +126,9 @@ router.post('/', UsersController.create);
  *       200:
  *         description: Role updated
  */
-router.patch('/:id/role', UsersController.updateRole);
+router.patch('/:id/role', (req, res, next) => {
+  void UsersController.updateRole(req, res, next);
+});
 
 /**
  * @swagger
@@ -148,7 +159,9 @@ router.patch('/:id/role', UsersController.updateRole);
  *       200:
  *         description: Status updated
  */
-router.patch('/:id/status', UsersController.updateStatus);
+router.patch('/:id/status', (req, res, next) => {
+  void UsersController.updateStatus(req, res, next);
+});
 
 /**
  * @swagger
@@ -170,6 +183,8 @@ router.patch('/:id/status', UsersController.updateStatus);
  *       400:
  *         description: Cannot delete own account
  */
-router.delete('/:id', UsersController.delete);
+router.delete('/:id', (req, res, next) => {
+  void UsersController.delete(req, res, next);
+});
 
 export default router;

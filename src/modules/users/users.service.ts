@@ -1,8 +1,10 @@
 import bcrypt from 'bcryptjs';
+import type { Request } from 'express';
+
 import { prisma } from '../../lib/prisma';
 import { getPagination, buildPaginationMeta } from '../../utils/pagination';
 import { AUDIT_ACTION, STATUS } from '../../constants';
-import type { Request } from 'express';
+
 import type { CreateUserInput, UpdateRoleInput, UpdateStatusInput } from './users.schema';
 
 /**

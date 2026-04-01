@@ -1,7 +1,9 @@
 import { Router } from 'express';
-import { AuthController } from './auth.controller';
+
 import { authenticate } from '../../middleware/auth.middleware';
 import { authLimiter } from '../../middleware/rateLimiter.middleware';
+
+import { AuthController } from './auth.controller';
 
 const router = Router();
 
@@ -37,7 +39,9 @@ const router = Router();
  *       429:
  *         description: Too many requests
  */
-router.post('/register', authLimiter, AuthController.register);
+router.post('/register', (req, res, next) => { void authLimiter(req, res, next); }, (req, res, next) => {
+  void AuthController.register(req, res, next);
+});
 
 /**
  * @swagger
@@ -66,7 +70,9 @@ router.post('/register', authLimiter, AuthController.register);
  *       429:
  *         description: Too many login attempts
  */
-router.post('/login', authLimiter, AuthController.login);
+router.post('/login', (req, res, next) => { void authLimiter(req, res, next); }, (req, res, next) => {
+  void AuthController.login(req, res, next);
+});
 
 /**
  * @swagger
@@ -82,7 +88,9 @@ router.post('/login', authLimiter, AuthController.login);
  *       401:
  *         description: Authentication required
  */
-router.post('/logout', authenticate, AuthController.logout);
+router.post('/logout', (req, res, next) => { void authenticate(req, res, next); }, (req, res, next) => {
+  void AuthController.logout(req, res, next);
+});
 
 /**
  * @swagger
@@ -98,6 +106,8 @@ router.post('/logout', authenticate, AuthController.logout);
  *       401:
  *         description: Authentication required
  */
-router.get('/me', authenticate, AuthController.getMe);
+router.get('/me', (req, res, next) => { void authenticate(req, res, next); }, (req, res, next) => {
+  void AuthController.getMe(req, res, next);
+});
 
 export default router;

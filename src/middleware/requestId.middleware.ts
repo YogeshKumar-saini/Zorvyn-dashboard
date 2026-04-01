@@ -1,5 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
 import { randomUUID } from 'crypto';
+
+import type { Request, Response, NextFunction } from 'express';
 
 /**
  * Attaches a unique trace ID to every request.

@@ -1,5 +1,7 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
+
 import { sendSuccess } from '../../utils/response';
+
 import { registerSchema, loginSchema } from './auth.schema';
 import { AuthService } from './auth.service';
 
@@ -44,7 +46,7 @@ export class AuthController {
   }
 
   /** GET /api/v1/auth/me */
-  static async getMe(req: Request, res: Response) {
+  static getMe(req: Request, res: Response, _next: NextFunction): Response | void {
     return sendSuccess(res, req.user, 'Current user profile');
   }
 }

@@ -1,9 +1,11 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+
 import { env } from '../config/env';
 import { prisma } from '../lib/prisma';
-import { sendError } from '../utils/response';
+import type { Role, UserStatus } from '../constants';
 import { STATUS } from '../constants';
+import { sendError } from '../utils/response';
 
 export interface JwtPayload {
   userId: string;
@@ -97,8 +99,8 @@ export async function authenticate(
       id: user.id,
       email: user.email,
       name: user.name,
-      role: user.role as import('../constants').Role,
-      status: user.status as import('../constants').UserStatus,
+      role: user.role as Role,
+      status: user.status as UserStatus,
     };
     next();
   } catch (err) {

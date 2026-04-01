@@ -1,6 +1,8 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
+
 import { sendError } from '../utils/response';
-import { ROLE, ROLE_HIERARCHY, Role } from '../constants';
+import type { Role } from '../constants';
+import { ROLE, ROLE_HIERARCHY } from '../constants';
 
 /**
  * Returns middleware that allows access only if the authenticated user's
@@ -16,7 +18,7 @@ export function requireRole(...allowedRoles: Role[]) {
       return;
     }
 
-    const userRole = req.user.role as Role;
+    const userRole = req.user.role;
 
     if (!allowedRoles.includes(userRole)) {
       sendError(
@@ -42,7 +44,7 @@ export function requireMinRole(minRole: Role) {
       return;
     }
 
-    const userLevel = ROLE_HIERARCHY.indexOf(req.user.role as Role);
+    const userLevel = ROLE_HIERARCHY.indexOf(req.user.role);
     const requiredLevel = ROLE_HIERARCHY.indexOf(minRole);
 
     if (userLevel < requiredLevel) {

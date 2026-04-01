@@ -1,5 +1,7 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
+
 import { sendSuccess } from '../../utils/response';
+
 import { createRecordSchema, updateRecordSchema, recordQuerySchema } from './records.schema';
 import { RecordsService } from './records.service';
 

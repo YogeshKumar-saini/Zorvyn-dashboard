@@ -1,26 +1,27 @@
-import express, { Request, Response } from 'express';
 import crypto from 'crypto';
-import cors from 'cors';
-import helmet from 'helmet';
+import type { IncomingMessage, ServerResponse } from 'http';
+
 import compression from 'compression';
+import cors from 'cors';
+import type { Request, Response, NextFunction } from 'express';
+import express from 'express';
+import helmet from 'helmet';
 import pinoHttp from 'pino-http';
-import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
+import swaggerUi from 'swagger-ui-express';
 
 import { env, allowedOrigins } from './config/env';
-import logger from './lib/logger';
-import { prisma } from './lib/prisma';
 import { API_PREFIX } from './constants';
-
-import { requestId } from './middleware/requestId.middleware';
-import { globalLimiter } from './middleware/rateLimiter.middleware';
+import { logger } from './lib/logger';
+import { prisma } from './lib/prisma';
 import { errorHandler } from './middleware/error.middleware';
 import { notFound } from './middleware/notFound.middleware';
-
+import { requestId } from './middleware/requestId.middleware';
+import { globalLimiter } from './middleware/rateLimiter.middleware';
 import authRouter from './modules/auth/auth.router';
-import usersRouter from './modules/users/users.router';
-import recordsRouter from './modules/records/records.router';
 import dashboardRouter from './modules/dashboard/dashboard.router';
+import recordsRouter from './modules/records/records.router';
+import usersRouter from './modules/users/users.router';
 
 const app = express();
 
@@ -44,35 +45,35 @@ app.use(
 );
 
 // ─── Request Tracing ─────────────────────────────────────────────────────────
-app.use(requestId);
+app.use((req, res, next) => { requestId(req, res, next); });
 
 // ─── HTTP Request Logging (enriched structured Pino) ──────────────────────────
 app.use(
   pinoHttp({
     logger,
-    genReqId: (req) => req.headers['x-request-id'] || crypto.randomUUID(),
+    genReqId: (req) => (req.headers['x-request-id'] as string) || crypto.randomUUID(),
     customProps: (req: Request) => ({
       reqId: req.reqId,
       userAgent: req.headers['user-agent'],
       host: req.headers['host'],
       remoteAddress: req.ip,
     }),
-    customLogLevel: (_req, res, err) => {
-      if (err || res.statusCode >= 500) return 'error';
-      if (res.statusCode >= 400) return 'warn';
+    customLogLevel: (_req: IncomingMessage, res: ServerResponse, err?: Error) => {
+      if (err || (res.statusCode && res.statusCode >= 500)) return 'error';
+      if (res.statusCode && res.statusCode >= 400) return 'warn';
       return 'info';
     },
     serializers: {
-      req: (req) => ({
+      req: (req: IncomingMessage & { query?: Record<string, unknown> }) => ({
         method: req.method,
         url: req.url,
         query: req.query,
       }),
-      res: (res) => ({
+      res: (res: ServerResponse) => ({
         statusCode: res.statusCode,
       }),
-      err: (err) => ({
-        type: err.type,
+      err: (err: Error & { type?: string }) => ({
+        type: err.type || err.name,
         message: err.message,
         stack: err.stack,
       }),
@@ -86,7 +87,7 @@ app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(compression());
 
 // ─── Global Rate Limiter ─────────────────────────────────────────────────────
-app.use(globalLimiter);
+app.use((req, res, next) => { void globalLimiter(req, res, next); });
 
 // ─── Swagger ─────────────────────────────────────────────────────────────────
 const swaggerOptions: swaggerJsdoc.Options = {
@@ -108,8 +109,10 @@ const swaggerOptions: swaggerJsdoc.Options = {
   },
   apis: ['./src/modules/**/*.router.ts'],
 };
-const swaggerDocs = swaggerJsdoc(swaggerOptions);
-app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, { explorer: true }));
+const swaggerDocs = swaggerJsdoc(swaggerOptions) as Record<string, unknown>;
+app.use('/api/docs', swaggerUi.serve, (req: Request, res: Response, next: NextFunction) => {
+  swaggerUi.setup(swaggerDocs)(req, res, next);
+});
 
 // ─── API v1 Routes ───────────────────────────────────────────────────────────
 app.use(`${API_PREFIX}/auth`, authRouter);
@@ -118,20 +121,22 @@ app.use(`${API_PREFIX}/records`, recordsRouter);
 app.use(`${API_PREFIX}/dashboard`, dashboardRouter);
 
 // ─── Health & Readiness ──────────────────────────────────────────────────────
-app.get('/health', async (_req: Request, res: Response) => {
-  try {
-    await prisma.$queryRaw`SELECT 1`;
-    res.json({
-      status: 'ok',
-      db: 'connected',
-      uptime: Math.floor(process.uptime()),
-      timestamp: new Date().toISOString(),
-      version: '1.0.0',
-      environment: env.NODE_ENV,
-    });
-  } catch {
-    res.status(503).json({ status: 'error', db: 'disconnected' });
-  }
+app.get('/health', (_req: Request, res: Response) => {
+  void (async () => {
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      res.json({
+        status: 'ok',
+        db: 'connected',
+        uptime: Math.floor(process.uptime()),
+        timestamp: new Date().toISOString(),
+        version: '1.0.0',
+        environment: env.NODE_ENV,
+      });
+    } catch {
+      res.status(503).json({ status: 'error', db: 'disconnected' });
+    }
+  })();
 });
 
 app.get('/ready', (_req: Request, res: Response) => {
@@ -162,19 +167,21 @@ if (require.main === module) {
   });
 
   // ── Graceful Shutdown ─────────────────────────────────────────────────────
-  const shutdown = async (signal: string) => {
+  const shutdown = (signal: string) => {
     logger.info({ signal }, 'Shutdown signal received — closing gracefully');
 
-    server.close(async () => {
-      logger.info('HTTP server closed');
-      try {
-        await prisma.$disconnect();
-        logger.info('Database disconnected');
-      } catch (err) {
-        logger.error({ err }, 'Error disconnecting from database');
-      }
-      logger.info('Shutdown complete');
-      process.exit(0);
+    server.close(() => {
+      void (async () => {
+        logger.info('HTTP server closed');
+        try {
+          await prisma.$disconnect();
+          logger.info('Database disconnected');
+        } catch (err) {
+          logger.error({ err }, 'Error disconnecting from database');
+        }
+        logger.info('Shutdown complete');
+        process.exit(0);
+      })();
     });
 
     // Force exit if graceful shutdown takes too long
@@ -184,8 +191,8 @@ if (require.main === module) {
     }, 10_000);
   };
 
-  process.on('SIGTERM', () => shutdown('SIGTERM'));
-  process.on('SIGINT', () => shutdown('SIGINT'));
+  process.on('SIGTERM', () => { shutdown('SIGTERM'); });
+  process.on('SIGINT', () => { shutdown('SIGINT'); });
 
   // Catch unhandled errors to prevent silent crashes
   process.on('unhandledRejection', (reason) => {
