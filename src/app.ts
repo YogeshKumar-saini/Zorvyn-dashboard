@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import path from 'path';
 import type { IncomingMessage, ServerResponse } from 'http';
 
 import compression from 'compression';
@@ -99,7 +100,10 @@ const swaggerOptions: swaggerJsdoc.Options = {
       description: 'Finance Data Processing & Role-Based Access Control API',
       contact: { name: 'Zorvyn Team' },
     },
-    servers: [{ url: `http://localhost:${env.PORT}`, description: 'Development' }],
+    servers: [
+      { url: `http://localhost:${env.PORT}`, description: 'Development' },
+      { url: 'https://zorvyn-dashboard.onrender.com', description: 'Production' },
+    ],
     components: {
       securitySchemes: {
         bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
@@ -107,7 +111,11 @@ const swaggerOptions: swaggerJsdoc.Options = {
     },
     security: [{ bearerAuth: [] }],
   },
-  apis: ['./src/modules/**/*.router.ts'],
+  // In production, the routers are compiled to .js files in the dist directory
+  apis: [
+    path.join(__dirname, './modules/**/*.router.js'),
+    path.join(__dirname, './modules/**/*.router.ts'),
+  ],
 };
 const swaggerDocs = swaggerJsdoc(swaggerOptions) as Record<string, unknown>;
 app.use('/api/docs', swaggerUi.serve, (req: Request, res: Response, next: NextFunction) => {
