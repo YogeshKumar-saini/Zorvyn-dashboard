@@ -62,6 +62,16 @@ router.post('/register', (req, res, next) => { void authLimiter(req, res, next);
  *                 format: email
  *               password:
  *                 type: string
+ *         application/x-www-form-urlencoded:
+ *           schema:
+ *             type: object
+ *             required: [username, password]
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
  *     responses:
  *       200:
  *         description: Login successful — returns JWT token

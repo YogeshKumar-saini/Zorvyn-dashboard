@@ -107,6 +107,15 @@ const swaggerOptions: swaggerJsdoc.Options = {
     components: {
       securitySchemes: {
         bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+        oauth2: {
+          type: 'oauth2',
+          flows: {
+            password: {
+              tokenUrl: `${API_PREFIX}/auth/login`,
+              scopes: {},
+            },
+          },
+        },
       },
     },
   },

@@ -22,10 +22,20 @@ export const registerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100).trim(),
 });
 
-export const loginSchema = z.object({
-  email: z.string().email('Invalid email address').toLowerCase().trim(),
-  password: z.string().min(1, 'Password is required'),
-});
+export const loginSchema = z.preprocess(
+  (data) => {
+    const d = data as Record<string, unknown>;
+    // OAuth2 Password flow sends 'username' instead of 'email'
+    if (!d['email'] && d['username']) {
+      return { ...d, email: d['username'] };
+    }
+    return d;
+  },
+  z.object({
+    email: z.string().email('Invalid email address').toLowerCase().trim(),
+    password: z.string().min(1, 'Password is required'),
+  })
+);
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
