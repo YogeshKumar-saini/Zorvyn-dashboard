@@ -1,5 +1,6 @@
-# ─── Stage 1: Builder ────────────────────────────────────────────────────────
 FROM node:20-alpine AS builder
+
+RUN apk add --no-cache libc6-compat openssl
 
 WORKDIR /app
 
@@ -17,6 +18,8 @@ RUN npm run build
 
 # ─── Stage 2: Runner ─────────────────────────────────────────────────────────
 FROM node:20-alpine AS runner
+
+RUN apk add --no-cache libc6-compat openssl
 
 WORKDIR /app
 

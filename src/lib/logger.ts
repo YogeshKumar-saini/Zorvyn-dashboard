@@ -9,17 +9,23 @@ const options: pino.LoggerOptions = {
   level: process.env['LOG_LEVEL'] || 'info',
 };
 
-// Only enable pretty printing if explicitly in development mode
-// This prevents crashes in production where pino-pretty (devDependency) is missing.
+// Defensive transport initialization: only attempt pino-pretty if in dev AND module is available
 if (process.env['NODE_ENV'] === 'development' || process.env['NODE_ENV'] === 'dev') {
-  options.transport = {
-    target: 'pino-pretty',
-    options: {
-      colorize: true,
-      translateTime: 'SYS:HH:MM:ss',
-      ignore: 'pid,hostname',
-    },
-  };
+  try {
+    // Verify module availability before assigning as transport
+    require.resolve('pino-pretty');
+    options.transport = {
+      target: 'pino-pretty',
+      options: {
+        colorize: true,
+        translateTime: 'SYS:HH:MM:ss',
+        ignore: 'pid,hostname',
+      },
+    };
+  } catch (err) {
+    // Fall back to JSON logging if transport fails to load
+    console.warn('⚠️ pino-pretty requested but not found, falling back to JSON.');
+  }
 }
 
 export const logger = pino(options);
