@@ -1,6 +1,7 @@
-import rateLimit from 'express-rate-limit';
+import { rateLimit } from 'express-rate-limit';
+import type { Request, Response } from 'express';
+
 import { sendError } from '../utils/response';
-import { Request, Response } from 'express';
 
 /**
  * Global rate limiter — applied to all routes.
@@ -11,7 +12,7 @@ export const globalLimiter = rateLimit({
   max: 300,
   standardHeaders: true,
   legacyHeaders: false,
-  skip: () => process.env.NODE_ENV === 'test',
+  skip: () => process.env['NODE_ENV'] === 'test',
   handler: (_req: Request, res: Response) => {
     sendError(res, 'Too many requests. Please slow down and try again later.', 429);
   },
@@ -27,7 +28,7 @@ export const authLimiter = rateLimit({
   skipSuccessfulRequests: true,
   standardHeaders: true,
   legacyHeaders: false,
-  skip: () => process.env.NODE_ENV === 'test',
+  skip: () => process.env['NODE_ENV'] === 'test',
   handler: (_req: Request, res: Response) => {
     sendError(
       res,
