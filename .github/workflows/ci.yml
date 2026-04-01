@@ -11,6 +11,21 @@ jobs:
     name: Build, Lint & Test
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres_password
+          POSTGRES_DB: zorvyn_test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -28,7 +43,8 @@ jobs:
         run: |
           cp .env.example .env
           echo "JWT_SECRET=ci_test_secret_must_be_at_least_32_chars_long_abc123" >> .env
-          echo "DATABASE_URL=file:./prisma/test.db" >> .env
+          echo "DATABASE_URL=postgresql://postgres:postgres_password@localhost:5432/zorvyn_test_db" >> .env
+          echo "JWT_EXPIRES_IN=7d" >> .env
 
       - name: Generate Prisma client
         run: npx prisma generate
