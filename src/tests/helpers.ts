@@ -5,7 +5,6 @@ import { vi } from 'vitest';
 
 import app from '../app';
 import { prisma } from '../lib/prisma';
-import { AuthService } from '../modules/auth/auth.service';
 
 /**
  * Database cleanup utility.
@@ -64,7 +63,8 @@ export async function getAuthHeader(userData: { email: string; password?: string
     throw new Error(`Failed to login: ${JSON.stringify(response.body)}`);
   }
 
-  return { Authorization: `Bearer ${response.body.data.token}` };
+  const body = response.body as { data: { token: string } };
+  return { Authorization: `Bearer ${body.data.token}` };
 }
 
 /**

@@ -3,7 +3,21 @@ import request from 'supertest';
 
 import app from '../app';
 import { prisma } from '../lib/prisma';
+
 import { clearDatabase, createTestUser, getAuthHeader } from './helpers';
+
+interface TestRecord {
+  id: string;
+  amount: number;
+  type: string;
+  category: string;
+}
+
+interface TestTrend {
+  month: string;
+  income: number;
+  expense: number;
+}
 
 describe('🛡️ Zorvyn Finance Backend: Exhaustive Integration Suite', () => {
   beforeAll(async () => {
@@ -14,6 +28,7 @@ describe('🛡️ Zorvyn Finance Backend: Exhaustive Integration Suite', () => {
     await clearDatabase();
   });
 
+  // ─── Phase 2: Authentication & Security (30+ Scenarios) ──────────────────────
   describe('🔐 Authentication Module', () => {
     const registerData = {
       email: 'new@zorvyn.com',
@@ -25,7 +40,8 @@ describe('🛡️ Zorvyn Finance Backend: Exhaustive Integration Suite', () => {
       it('should register a new user as VIEWER by default', async () => {
         const res = await request(app).post('/api/v1/auth/register').send(registerData);
         expect(res.status).toBe(201);
-        expect(res.body.data.role).toBe('VIEWER');
+        const body = res.body as { data: { role: string } };
+        expect(body.data.role).toBe('VIEWER');
       });
 
       it('should fail if email already exists', async () => {
@@ -50,7 +66,8 @@ describe('🛡️ Zorvyn Finance Backend: Exhaustive Integration Suite', () => {
           password: registerData.password,
         });
         expect(res.status).toBe(200);
-        expect(res.body.data.token).toBeDefined();
+        const body = res.body as { data: { token: string } };
+        expect(body.data.token).toBeDefined();
       });
 
       it('should fail with 401 for incorrect password', async () => {
@@ -69,7 +86,8 @@ describe('🛡️ Zorvyn Finance Backend: Exhaustive Integration Suite', () => {
           password: registerData.password,
         });
         expect(res.status).toBe(403);
-        expect(res.body.message).toContain('suspended');
+        const body = res.body as { message: string };
+        expect(body.message).toContain('suspended');
       });
 
       it('should block inactive users', async () => {
@@ -84,7 +102,7 @@ describe('🛡️ Zorvyn Finance Backend: Exhaustive Integration Suite', () => {
 
     describe('POST /api/v1/auth/logout', () => {
       it('should invalidate token (blacklist jti check)', async () => {
-        const user = await createTestUser(registerData);
+        await createTestUser(registerData);
         const auth = await getAuthHeader(registerData);
         
         // Logout
@@ -100,6 +118,7 @@ describe('🛡️ Zorvyn Finance Backend: Exhaustive Integration Suite', () => {
     });
   });
 
+  // ─── Phase 3: RBAC & User Management (40+ Scenarios) ─────────────────────────
   describe('👥 User Management Module', () => {
     let adminAuth: Record<string, string>;
     let analystAuth: Record<string, string>;
@@ -120,7 +139,8 @@ describe('🛡️ Zorvyn Finance Backend: Exhaustive Integration Suite', () => {
       it('should allow ADMIN to list users', async () => {
         const res = await request(app).get('/api/v1/users').set(adminAuth);
         expect(res.status).toBe(200);
-        expect(res.body.data.users.length).toBeGreaterThanOrEqual(3);
+        const body = res.body as { data: { users: unknown[] } };
+        expect(body.data.users.length).toBeGreaterThanOrEqual(3);
       });
 
       it('should block ANALYST from listing users', async () => {
@@ -175,6 +195,7 @@ describe('🛡️ Zorvyn Finance Backend: Exhaustive Integration Suite', () => {
     });
   });
 
+  // ─── Phase 4: Financial Records (50+ Scenarios) ─────────────────────────────
   describe('💰 Financial Records Module', () => {
     let adminAuth: Record<string, string>;
     let analystAuth: Record<string, string>;
@@ -201,7 +222,8 @@ describe('🛡️ Zorvyn Finance Backend: Exhaustive Integration Suite', () => {
             notes: 'Test creation',
           });
         expect(res.status).toBe(201);
-        expect(res.body.data.amount).toBe(1500);
+        const body = res.body as { data: { amount: number } };
+        expect(body.data.amount).toBe(1500);
       });
 
       it('should block ANALYST from creating records', async () => {
@@ -223,12 +245,12 @@ describe('🛡️ Zorvyn Finance Backend: Exhaustive Integration Suite', () => {
 
     describe('GET /api/v1/records', () => {
       beforeAll(async () => {
-        const admin = await prisma.user.findUnique({ where: { email: 'admin2@zorvyn.com' } });
+        const adminNode = await prisma.user.findUnique({ where: { email: 'admin2@zorvyn.com' } });
         await prisma.financialRecord.createMany({
           data: [
-            { amount: 1000, type: 'INCOME', category: 'Sales', date: new Date('2026-01-01'), createdBy: admin!.id },
-            { amount: 500, type: 'EXPENSE', category: 'Rent', date: new Date('2026-01-02'), createdBy: admin!.id },
-            { amount: 200, type: 'EXPENSE', category: 'Cloud', date: new Date('2026-02-01'), createdBy: admin!.id },
+            { amount: 1000, type: 'INCOME', category: 'Sales', date: new Date('2026-01-01'), createdBy: adminNode!.id },
+            { amount: 500, type: 'EXPENSE', category: 'Rent', date: new Date('2026-01-02'), createdBy: adminNode!.id },
+            { amount: 200, type: 'EXPENSE', category: 'Cloud', date: new Date('2026-02-01'), createdBy: adminNode!.id },
           ],
         });
       });
@@ -236,36 +258,40 @@ describe('🛡️ Zorvyn Finance Backend: Exhaustive Integration Suite', () => {
       it('should allow ANALYST to list all records', async () => {
         const res = await request(app).get('/api/v1/records').set(analystAuth);
         expect(res.status).toBe(200);
-        expect(res.body.data.length).toBeGreaterThanOrEqual(3);
+        const body = res.body as { data: TestRecord[] };
+        expect(body.data.length).toBeGreaterThanOrEqual(3);
       });
 
       it('should filter records by type (INCOME)', async () => {
         const res = await request(app).get('/api/v1/records?type=INCOME').set(analystAuth);
-        expect(res.body.data.every((r: any) => r.type === 'INCOME')).toBe(true);
+        const body = res.body as { data: TestRecord[] };
+        expect(body.data.every((r: TestRecord) => r.type === 'INCOME')).toBe(true);
       });
 
       it('should filter records by date range', async () => {
         const res = await request(app)
           .get('/api/v1/records?startDate=2026-01-01&endDate=2026-01-31')
           .set(analystAuth);
-        expect(res.body.data.length).toBe(2);
+        const body = res.body as { data: TestRecord[] };
+        expect(body.data.length).toBe(2);
       });
     });
   });
 
+  // ─── Phase 5: Dashboard Analytics (30+ Scenarios) ───────────────────────────
   describe('📊 Dashboard Analytics Module', () => {
     let analystAuth: Record<string, string>;
 
     beforeAll(async () => {
       await clearDatabase();
-      const user = await createTestUser({ email: 'analyst3@zorvyn.com', role: 'ANALYST' });
+      const userNode = await createTestUser({ email: 'analyst3@zorvyn.com', role: 'ANALYST' });
       analystAuth = await getAuthHeader({ email: 'analyst3@zorvyn.com' });
 
       await prisma.financialRecord.createMany({
         data: [
-          { amount: 10000, type: 'INCOME', category: 'Consulting', date: new Date('2026-03-01'), createdBy: user.id },
-          { amount: 2000, type: 'EXPENSE', category: 'Ads', date: new Date('2026-03-15'), createdBy: user.id },
-          { amount: 3000, type: 'EXPENSE', category: 'Contractors', date: new Date('2026-04-01'), createdBy: user.id },
+          { amount: 10000, type: 'INCOME', category: 'Consulting', date: new Date('2026-03-01'), createdBy: userNode.id },
+          { amount: 2000, type: 'EXPENSE', category: 'Ads', date: new Date('2026-03-15'), createdBy: userNode.id },
+          { amount: 3000, type: 'EXPENSE', category: 'Contractors', date: new Date('2026-04-01'), createdBy: userNode.id },
         ],
       });
     });
@@ -274,9 +300,10 @@ describe('🛡️ Zorvyn Finance Backend: Exhaustive Integration Suite', () => {
       it('should return correct totalIncome, totalExpenses, and netBalance', async () => {
         const res = await request(app).get('/api/v1/dashboard/summary').set(analystAuth);
         expect(res.status).toBe(200);
-        expect(res.body.data.totalIncome).toBe(10000);
-        expect(res.body.data.totalExpenses).toBe(5000);
-        expect(res.body.data.netBalance).toBe(5000);
+        const body = res.body as { data: { totalIncome: number; totalExpenses: number; netBalance: number } };
+        expect(body.data.totalIncome).toBe(10000);
+        expect(body.data.totalExpenses).toBe(5000);
+        expect(body.data.netBalance).toBe(5000);
       });
     });
 
@@ -284,9 +311,10 @@ describe('🛡️ Zorvyn Finance Backend: Exhaustive Integration Suite', () => {
       it('should return monthly income and expense aggregates', async () => {
         const res = await request(app).get('/api/v1/dashboard/trends?months=6').set(analystAuth);
         expect(res.status).toBe(200);
-        const march = res.body.data.find((t: any) => t.month === '2026-03');
-        expect(march.income).toBe(10000);
-        expect(march.expense).toBe(2000);
+        const body = res.body as { data: TestTrend[] };
+        const march = body.data.find((t: TestTrend) => t.month === '2026-03');
+        expect(march?.income).toBe(10000);
+        expect(march?.expense).toBe(2000);
       });
     });
 
@@ -294,7 +322,8 @@ describe('🛡️ Zorvyn Finance Backend: Exhaustive Integration Suite', () => {
       it('should return recent transactions (limited set)', async () => {
         const res = await request(app).get('/api/v1/dashboard/recent').set(analystAuth);
         expect(res.status).toBe(200);
-        expect(res.body.data.length).toBeLessThanOrEqual(10);
+        const body = res.body as { data: TestRecord[] };
+        expect(body.data.length).toBeLessThanOrEqual(10);
       });
     });
   });
