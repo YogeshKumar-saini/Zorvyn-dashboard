@@ -1,0 +1,47 @@
+# ─── Dependencies ─────────────────────────────────────────────────────────────
+node_modules/
+
+# ─── Build output ─────────────────────────────────────────────────────────────
+dist/
+tsconfig.tsbuildinfo
+
+# ─── Environment / Secrets ────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ─── Database ─────────────────────────────────────────────────────────────────
+prisma/*.db
+prisma/*.db-journal
+prisma/*.db-shm
+prisma/*.db-wal
+
+# ─── Logs ────────────────────────────────────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+
+# ─── IDE / OS ─────────────────────────────────────────────────────────────────
+.DS_Store
+.vscode/
+.idea/
+Thumbs.db
+
+# ─── Test coverage ─────────────────────────────────────────────────────────────
+coverage/
+tests/
+
+
+# ─── Misc ──────────────────────────────────────────────────────────────────────
+*.swp
+*.swo
+*.orig
+*.bak
+*.tmp
+*.cache
+*.pid
+*.seed
+*.lock
+*.sublime-workspace
+*.sublime-project
+

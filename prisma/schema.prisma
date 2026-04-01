@@ -1,0 +1,102 @@
+// ─── Generator ─────────────────────────────────────────────────────────────────
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL")
+}
+
+// ─── Enums (enforced at DB level in PostgreSQL) ───────────────────────────────
+
+enum Role {
+  VIEWER
+  ANALYST
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum RecordType {
+  INCOME
+  EXPENSE
+}
+
+// ─── User ─────────────────────────────────────────────────────────────────────
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  password  String
+  name      String
+  role      Role       @default(VIEWER)
+  status    UserStatus @default(ACTIVE)
+
+  // Soft-delete fields
+  isDeleted Boolean    @default(false)
+  deletedAt DateTime?
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  records   FinancialRecord[]
+  auditLogs AuditLog[]
+
+  @@index([role])
+  @@index([status])
+  @@index([isDeleted])
+  @@map("users")
+}
+
+// ─── Financial Record ─────────────────────────────────────────────────────────
+model FinancialRecord {
+  id        String     @id @default(cuid())
+  amount    Float
+  type      RecordType
+  category  String
+  date      DateTime
+  notes     String?
+
+  // Soft-delete
+  isDeleted Boolean    @default(false)
+  deletedAt DateTime?
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  createdBy String
+  creator   User       @relation(fields: [createdBy], references: [id])
+
+  @@index([type])
+  @@index([category])
+  @@index([date])
+  @@index([isDeleted])
+  @@index([createdBy])
+  @@map("financial_records")
+}
+
+// ─── Audit Log ────────────────────────────────────────────────────────────────
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  action    String   // e.g. CREATE_RECORD, UPDATE_USER_ROLE
+  entity    String   // e.g. FinancialRecord, User
+  entityId  String
+  ipAddress String?
+  userAgent String?
+  before    String?  // JSON string of previous state
+  after     String?  // JSON string of new state
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([entity])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
