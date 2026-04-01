@@ -5,16 +5,21 @@ import pino from 'pino';
  * - Development: pretty-printed, colourised output via pino-pretty
  * - Production:  fast JSON output for log aggregation (Datadog, Loki, etc.)
  */
-export const logger = pino({
+const options: pino.LoggerOptions = {
   level: process.env['LOG_LEVEL'] || 'info',
-  ...(process.env['NODE_ENV'] === 'development' && {
-    transport: {
-      target: 'pino-pretty',
-      options: {
-        colorize: true,
-        translateTime: 'SYS:HH:MM:ss',
-        ignore: 'pid,hostname',
-      },
+};
+
+// Only enable pretty printing if explicitly in development mode
+// This prevents crashes in production where pino-pretty (devDependency) is missing.
+if (process.env['NODE_ENV'] === 'development' || process.env['NODE_ENV'] === 'dev') {
+  options.transport = {
+    target: 'pino-pretty',
+    options: {
+      colorize: true,
+      translateTime: 'SYS:HH:MM:ss',
+      ignore: 'pid,hostname',
     },
-  }),
-});
+  };
+}
+
+export const logger = pino(options);
