@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterEach } from 'vitest';
 import request from 'supertest';
 
 import app from '../app';
@@ -26,6 +26,10 @@ describe('🛡️ Zorvyn Finance Backend: Exhaustive Integration Suite', () => {
 
   // ─── Phase 2: Authentication & Security (30+ Scenarios) ──────────────────────
   describe('🔐 Authentication Module', () => {
+    afterEach(async () => {
+      await clearDatabase();
+    });
+
     const registerData = {
       email: 'new@zorvyn.com',
       password: 'Password@123!',
