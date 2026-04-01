@@ -109,7 +109,6 @@ const swaggerOptions: swaggerJsdoc.Options = {
         bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
       },
     },
-    security: [{ bearerAuth: [] }],
   },
   // In production, the routers are compiled to .js files in the dist directory
   apis: [
