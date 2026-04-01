@@ -38,4 +38,5 @@ export const isProd = env.NODE_ENV === 'production';
 export const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173', // Vite default
+  'https://zorvyn-dashboard.onrender.com', // Render Production
 ];
